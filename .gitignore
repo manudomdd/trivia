@@ -1,3 +1,36 @@
-# Ignorar dependencias de Node.js en cualquier carpeta
+# ========================
+# ANDROID / JAVA
+# ========================
+*.iml
+.gradle/
+local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.aab
+
+# Ignorar carpetas 'build' en cualquier profundidad (app/build, etc.)
+**/build/
+
+# ========================
+# NODE.JS / SERVER
+# ========================
 node_modules/
 **/node_modules/
+npm-debug.log
+yarn-error.log
+.env
+.env.local
+coverage/
+
+# ========================
+# SISTEMA / IDEs
+# ========================
+.vscode/
+*.swp
+Thumbs.db
