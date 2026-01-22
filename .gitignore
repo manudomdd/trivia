@@ -1,0 +1,3 @@
+# Ignorar dependencias de Node.js en cualquier carpeta
+node_modules/
+**/node_modules/
