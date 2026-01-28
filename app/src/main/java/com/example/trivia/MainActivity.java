@@ -30,6 +30,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// Imports de Konfetti
+import nl.dionsegijn.konfetti.xml.KonfettiView;
+import nl.dionsegijn.konfetti.core.Party;
+import nl.dionsegijn.konfetti.core.PartyFactory;
+import nl.dionsegijn.konfetti.core.emitter.Emitter;
+import nl.dionsegijn.konfetti.core.emitter.EmitterConfig; // Asegúrate de importar esto
+import nl.dionsegijn.konfetti.core.models.Shape;
+import nl.dionsegijn.konfetti.core.models.Size;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 public class MainActivity extends AppCompatActivity {
     private TextView tvQuestion, tvScore, tvOpponentScore, tvGameStatus;
     private TextView tvFinalScore, tvFinalOpponentScore, tvWinnerText;
@@ -39,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     private Group gameGroup, gameOverGroup;
     private MaterialCardView cardScoreHeader;
     private List<Button> optionButtons;
+
+    // VARIABLE NUEVA PARA LA VISTA DE CONFETI
+    private KonfettiView konfettiView;
 
     private List<Question> questionList;
     private int currentQuestionIndex = 0;
@@ -79,6 +93,9 @@ public class MainActivity extends AppCompatActivity {
         score = 0;
         opponentScore = 0;
         isWaitingForResults = false;
+
+        // Limpiamos confeti si hubiera quedado de la partida anterior
+        if (konfettiView != null) konfettiView.reset();
 
         tvScore.setText("Yo: 0");
         tvOpponentScore.setText("Rival: 0");
@@ -136,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
             });
         });
 
-        // Evento cuando el rival responde
         socketManager.getSocket().on("opponent_answered", args -> {
             runOnUiThread(() -> {
                 try {
@@ -150,6 +166,12 @@ public class MainActivity extends AppCompatActivity {
                         tvOpponentScore.setText("Rival: " + opponentScore);
                         tvGameStatus.setText("Rival acertó (+10)");
                         tvGameStatus.setTextColor(Color.GREEN);
+
+                        // Si estamos en la pantalla final, actualizamos en vivo quién gana
+                        if (gameOverGroup.getVisibility() == View.VISIBLE) {
+                            updateWinnerDisplay();
+                        }
+
                     } else {
                         tvGameStatus.setText("Rival falló");
                         tvGameStatus.setTextColor(Color.RED);
@@ -204,11 +226,28 @@ public class MainActivity extends AppCompatActivity {
         tvWinnerText = findViewById(R.id.tvWinnerText);
         btnRestart = findViewById(R.id.btnRestart);
 
+        // INICIALIZAR VISTA DE CONFETI
+        konfettiView = findViewById(R.id.konfettiView);
+
         optionButtons = new ArrayList<>();
         optionButtons.add(btnOption1);
         optionButtons.add(btnOption2);
         optionButtons.add(btnOption3);
         optionButtons.add(btnOption4);
+
+        optionButtons = new ArrayList<>();
+        optionButtons.add(btnOption1);
+        optionButtons.add(btnOption2);
+        optionButtons.add(btnOption3);
+        optionButtons.add(btnOption4);
+
+        // --- CÓDIGO TEMPORAL DE PRUEBA (BORRAR LUEGO) ---
+        // Al hacer clic en "Yo: 0", sale el confeti de victoria
+        tvScore.setOnClickListener(v -> showVictoryConfetti());
+
+        // Al hacer clic en "Rival: 0", sale la lluvia de derrota
+        tvOpponentScore.setOnClickListener(v -> showSadRain());
+        // -----------------------------------------------
     }
 
     private void showQuestion() {
@@ -304,16 +343,59 @@ public class MainActivity extends AppCompatActivity {
         tvFinalScore.setText(String.valueOf(score));
         tvFinalOpponentScore.setText(String.valueOf(opponentScore));
 
+        // Reseteamos efectos previos
+        konfettiView.reset();
+
         if (score > opponentScore) {
+            // GANASTE
             tvWinnerText.setText("¡HAS GANADO!");
             tvWinnerText.setTextColor(Color.GREEN);
+            showVictoryConfetti();
+
         } else if (score < opponentScore) {
+            // PERDISTE
             tvWinnerText.setText("¡HAS PERDIDO!");
             tvWinnerText.setTextColor(Color.RED);
+            showSadRain();
+
         } else {
+            // EMPATE
             tvWinnerText.setText("¡EMPATE!");
             tvWinnerText.setTextColor(Color.YELLOW);
+            // (Opcional) showVictoryConfetti() si quieres celebrar empate
         }
+    }
+
+    // --- NUEVOS MÉTODOS PARA LOS EFECTOS ---
+
+    private void showVictoryConfetti() {
+        EmitterConfig emitterConfig = new Emitter(100L, TimeUnit.MILLISECONDS).max(100);
+        konfettiView.start(
+                new PartyFactory(emitterConfig)
+                        .spread(360)
+                        .shapes(Arrays.asList(Shape.Square.INSTANCE, Shape.Circle.INSTANCE))
+                        .colors(Arrays.asList(0xfce18a, 0xff726d, 0xf4306d, 0xb48def))
+                        .setSpeedBetween(0f, 30f)
+                        .position(0.5, 0.3)
+                        .build()
+        );
+    }
+
+    private void showSadRain() {
+        EmitterConfig emitterConfig = new Emitter(5, TimeUnit.SECONDS).perSecond(30);
+        konfettiView.start(
+                new PartyFactory(emitterConfig)
+                        .angle(270)
+                        .spread(90)
+                        .shapes(Arrays.asList(Shape.Square.INSTANCE))
+                        .colors(Arrays.asList(0x4A90E2, 0xBDC3C7))
+                        .setSpeedBetween(0f, 15f)
+                        .position(0.0, 1.0, 0.0, 0.0)
+                        .sizes(new Size(12, 5f, 0f))
+                        .timeToLive(3000L)
+                        .fadeOutEnabled(true)
+                        .build()
+        );
     }
 
     @Override

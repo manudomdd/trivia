@@ -48,4 +48,6 @@ dependencies {
         // Sintaxis correcta para Kotlin DSL (.kts)
         exclude(group = "org.json", module = "json")
     }
+
+    implementation ("nl.dionsegijn:konfetti-xml:2.0.4")
 }
